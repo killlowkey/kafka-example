@@ -1,9 +1,7 @@
 # Kafka
 
 ## [环境配置](https://developer.confluent.io/quickstart/kafka-docker/)
-创建 docker-compose.yml
-1. zookeeper 容器
-2. kafka 容器
+创建 docker-compose.yml，在该文件中需要创建 zookeeper 和 kafka container
 ```yml
 version: '3'
 services:
@@ -32,17 +30,17 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 ```
-kafka 默认是本地访问的，倘若需要外部访问，将 KAFKA_ADVERTISED_LISTENERS 中的地址修改为公网地址
+kafka 默认是本地访问，倘若需要外部访问，将 KAFKA_ADVERTISED_LISTENERS 中的地址修改为公网地址
 ```yml
   KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.16.60.77:9092,PLAINTEXT_INTERNAL://broker:29092
 ```
 
-启动 docker-compose
+使用 docker-compose 启动 kafka 和 zookeeper
 ```shell
-docker compose up -d
+docker-compose up -d
 ```
 
-Linux 放开端口
+Linux 防火墙放开 9092 和 29092 端口
 ```shell
 firewall-cmd --zone=public --add-port=9092/tcp --permanent
 firewall-cmd --zone=public --add-port=29092/tcp --permanent
