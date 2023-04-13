@@ -50,7 +50,9 @@ func sendMsgToKafka() {
 func sendMsgToKafkaWithNum(num int) {
 	var messages []kafka.Message
 	for i := 0; i < num; i++ {
-		messages = append(messages, kafka.Message{Value: []byte(fmt.Sprintf("message-%d", i))})
+		messages = append(messages, kafka.Message{
+			Value: []byte(fmt.Sprintf("message-%d", i)),
+		})
 	}
 
 	res, err := conn.WriteMessages(messages...)
