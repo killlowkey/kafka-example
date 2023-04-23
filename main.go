@@ -155,6 +155,13 @@ func consumeGroupExample() {
 			MaxBytes: 10e6, // 10MB
 		})
 
+		defer func() {
+			err := r.Close()
+			if err != nil {
+				return
+			}
+		}()
+
 		for {
 			message, err := r.ReadMessage(context.Background())
 			if err != nil {
