@@ -90,6 +90,84 @@ func consumeBatchMsgFromKafka() {
 	}
 }
 
+// createTopic 创建 topic
+func createTopic(topic string) {
+	// to create topics when auto.create.topics.enable='true'
+	conn, err := kafka.DialLeader(context.Background(), "tcp", *addr, topic, 0)
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			return
+		}
+	}()
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+// consumeGroupExample 消费组例子
+func consumeGroupExample() {
+	go func() {
+		createTopic("consumeGroupExample")
+
+		w := kafka.Writer{
+			Addr:     kafka.TCP(*addr),
+			Topic:    "consumeGroupExample",
+			Balancer: &kafka.LeastBytes{},
+		}
+
+		defer func() {
+			if err := w.Close(); err != nil {
+				log.Fatal("failed to close writer:", err)
+			}
+		}()
+
+		for {
+			err := w.WriteMessages(context.Background(),
+				kafka.Message{
+					Key:   []byte("Key-A"),
+					Value: []byte("Hello World!"),
+				},
+				kafka.Message{
+					Key:   []byte("Key-B"),
+					Value: []byte("One!"),
+				},
+				kafka.Message{
+					Key:   []byte("Key-C"),
+					Value: []byte("Two!"),
+				},
+			)
+
+			if err != nil {
+				log.Fatal("failed to write messages:", err)
+			}
+		}
+	}()
+
+	go func() {
+		// 等待生产者就绪
+		time.Sleep(time.Second * 2)
+		r := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:  []string{*addr},
+			GroupID:  "consume-group-id",
+			Topic:    "consumeGroupExample",
+			MinBytes: 10e3, // 10KB，最小的消息单元
+			MaxBytes: 10e6, // 10MB
+		})
+
+		for {
+			message, err := r.ReadMessage(context.Background())
+			if err != nil {
+				log.Fatal("failed to read messages:", err)
+			}
+
+			log.Printf("topic: %s key: %s value: %s\n", message.Topic, string(message.Key), string(message.Value))
+		}
+	}()
+
+	time.Sleep(time.Minute)
+}
+
 func main() {
 	defer func() {
 		_ = conn.Close()
@@ -98,6 +176,8 @@ func main() {
 	//sendMsgToKafka()
 	//consumeSingleMsgFromKafka()
 
-	sendMsgToKafkaWithNum(1000)
-	consumeBatchMsgFromKafka()
+	//sendMsgToKafkaWithNum(1000)
+	//consumeBatchMsgFromKafka()
+
+	consumeGroupExample()
 }
