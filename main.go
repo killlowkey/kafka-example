@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/compress"
 	"log"
 	"time"
 )
@@ -175,6 +176,40 @@ func consumeGroupExample() {
 	time.Sleep(time.Minute)
 }
 
+func brokerExample() {
+	// 返回当前 connection 所连接的 broker
+	broker := conn.Broker()
+	log.Println("current broker: ", broker)
+
+	// 返回 kafka 元数据中的 broker（集群所有 broker）
+	brokers, err := conn.Brokers()
+	if err != nil {
+		panic(err)
+	}
+	for _, b := range brokers {
+		log.Println("Brokers：", b)
+	}
+}
+
+func compressMessageExample() {
+	// gzip
+	codec := compress.Compression(1).Codec()
+	if codec == nil {
+		log.Fatalf("not found %d codec", 1)
+	}
+	// write message with specified codec
+	_, err := conn.WriteCompressedMessages(codec, kafka.Message{Key: []byte("name"), Value: []byte("ray")})
+	if err != nil {
+		log.Fatal("failed to write message: ", err.Error())
+	}
+
+	message, err := conn.ReadMessage(20)
+	if err != nil {
+		log.Fatal("failed to read message from kafka: ", err.Error())
+	}
+	log.Printf("key: %s  \tvalue：%s\n", string(message.Key), string(message.Value))
+}
+
 func main() {
 	defer func() {
 		_ = conn.Close()
@@ -186,5 +221,8 @@ func main() {
 	//sendMsgToKafkaWithNum(1000)
 	//consumeBatchMsgFromKafka()
 
-	consumeGroupExample()
+	//consumeGroupExample()
+
+	//brokerExample()
+	compressMessageExample()
 }
